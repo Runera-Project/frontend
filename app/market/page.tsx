@@ -97,13 +97,13 @@ export default function MarketPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] pb-safe">
-      <div className="mx-auto max-w-md">
+    <div className="min-h-screen bg-[#f5f7fa]">
+      <div className="mx-auto max-w-md pb-28">
         <MarketHeader />
         <ProfilePreview selectedSkin={selectedSkin} />
         <PreviewTabs activeTab={activeTab} onTabChange={setActiveTab} />
         
-        <div className="px-6 pb-32">
+        <div className="px-5">
           <SkinCollection
             title="My Collection"
             skins={ownedSkins}
@@ -118,9 +118,8 @@ export default function MarketPage() {
             onSelectSkin={handleSelectSkin}
           />
         </div>
-
-        <BottomNavigation activeTab="Market" />
       </div>
+      <BottomNavigation activeTab="Market" />
     </div>
   );
 }

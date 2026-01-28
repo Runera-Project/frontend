@@ -5,13 +5,13 @@ import BottomNavigation from '@/components/BottomNavigation';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#f5f7fa] pb-safe">
-      <div className="mx-auto max-w-md">
+    <div className="min-h-screen bg-[#f5f7fa]">
+      <div className="mx-auto max-w-md pb-28">
         <Header />
         <QuestCard />
         <ActivityFeed />
-        <BottomNavigation activeTab="Home" />
       </div>
+      <BottomNavigation activeTab="Home" />
     </div>
   );
 }

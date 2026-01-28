@@ -10,15 +10,15 @@ export default function ProfilePage() {
   const selectedBannerGradient = 'from-purple-600 via-pink-500 to-red-500';
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] pb-safe">
-      <div className="mx-auto max-w-md">
+    <div className="min-h-screen bg-[#f5f7fa]">
+      <div className="mx-auto max-w-md pb-28">
         <ProfileHeader />
         <ProfileIdentityCard bannerGradient={selectedBannerGradient} />
         <RankProgressCard />
         <StatsOverview />
         <AchievementsSection />
-        <BottomNavigation activeTab="Profil" />
       </div>
+      <BottomNavigation activeTab="User" />
     </div>
   );
 }

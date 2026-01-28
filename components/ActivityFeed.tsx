@@ -27,9 +27,9 @@ const dummyPosts = [
 
 export default function ActivityFeed() {
   return (
-    <div className="px-4 pb-32">
-      <h2 className="mb-4 text-xl font-semibold text-gray-900">Activity Feed</h2>
-      <div className="flex flex-col gap-4">
+    <div className="px-5">
+      <h2 className="mb-4 text-lg font-bold text-gray-900">Activity Feed</h2>
+      <div className="flex flex-col gap-3">
         {dummyPosts.map((post, index) => (
           <PostCard key={index} {...post} />
         ))}

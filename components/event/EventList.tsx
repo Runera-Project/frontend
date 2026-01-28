@@ -58,28 +58,28 @@ export default function EventList() {
   const lockedEvents = dummyEvents.filter(event => isEventLocked(event.required_rank, userRank));
 
   return (
-    <div className="px-6 pb-32">
+    <div className="px-5">
       {/* User Rank Badge */}
-      <div className="mb-6 flex items-center justify-between rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 p-4 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-            <Trophy className="h-6 w-6 text-white" />
+      <div className="mb-5 flex items-center justify-between rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 p-4 shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
+            <Trophy className="h-5 w-5 text-white" />
           </div>
           <div>
-            <p className="text-xs font-medium text-white/80">Your Rank</p>
-            <p className="text-lg font-bold text-white">{userRank}</p>
+            <p className="text-[10px] font-medium text-white/80">Your Rank</p>
+            <p className="text-base font-bold text-white">{userRank}</p>
           </div>
         </div>
-        <button className="rounded-xl bg-white/20 px-4 py-2 text-sm font-bold text-white backdrop-blur-sm transition-all hover:bg-white/30">
+        <button className="rounded-lg bg-white/20 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-sm transition-all hover:bg-white/30">
           Upgrade
         </button>
       </div>
 
       {/* Available Events */}
       {unlockedEvents.length > 0 && (
-        <div className="mb-8">
-          <h2 className="mb-4 text-lg font-bold text-gray-900">Available for You</h2>
-          <div className="flex flex-col gap-5">
+        <div className="mb-6">
+          <h2 className="mb-3 text-base font-bold text-gray-900">Available for You</h2>
+          <div className="flex flex-col gap-3">
             {unlockedEvents.map((event) => (
               <EventCard
                 key={event.id}
@@ -94,8 +94,8 @@ export default function EventList() {
       {/* Locked Events */}
       {lockedEvents.length > 0 && (
         <div>
-          <h2 className="mb-4 text-lg font-bold text-gray-900">Unlock with Higher Rank</h2>
-          <div className="flex flex-col gap-5">
+          <h2 className="mb-3 text-base font-bold text-gray-900">Unlock with Higher Rank</h2>
+          <div className="flex flex-col gap-3">
             {lockedEvents.map((event) => (
               <EventCard
                 key={event.id}
