@@ -71,66 +71,63 @@ export default function RecordPage() {
         {/* Idle State with Map (Default) */}
         {isIdle && showMap && (
           <>
-            {/* Collapse Button at Top */}
-            <div className="flex justify-center pt-5 pb-2">
-              <button
-                onClick={() => setShowMap(false)}
-                className="flex items-center justify-center text-blue-500"
-              >
-                <ChevronDown className="h-6 w-6" />
-              </button>
-            </div>
+            {/* Full Map - Fullscreen */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200">
+              {/* Mock Map Background - Full Screen */}
+              <div className="absolute inset-0">
+                <svg className="h-full w-full" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
+                  <defs>
+                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#999" strokeWidth="0.5"/>
+                    </pattern>
+                  </defs>
+                  <rect width="400" height="600" fill="url(#grid)" />
+                  <text x="50" y="150" fontSize="10" fill="#666" opacity="0.6">Jl. Nusantara</text>
+                  <text x="200" y="300" fontSize="10" fill="#666" opacity="0.6">Quest House</text>
+                  <text x="100" y="450" fontSize="10" fill="#666" opacity="0.6">Jl. Taman Bungur</text>
+                </svg>
+              </div>
 
-            {/* Full Map */}
-            <div className="mx-5 mb-4 flex-1 overflow-hidden rounded-2xl bg-white shadow-sm">
-              <div className="relative h-full min-h-[400px] bg-gradient-to-br from-gray-100 to-gray-200">
-                {/* Mock Map Background */}
-                <div className="absolute inset-0 opacity-30">
-                  <svg className="h-full w-full" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
-                    <defs>
-                      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#999" strokeWidth="0.5"/>
-                      </pattern>
-                    </defs>
-                    <rect width="400" height="600" fill="url(#grid)" />
-                    <text x="50" y="150" fontSize="10" fill="#666" opacity="0.6">Jl. Nusantara</text>
-                    <text x="200" y="300" fontSize="10" fill="#666" opacity="0.6">Quest House</text>
-                    <text x="100" y="450" fontSize="10" fill="#666" opacity="0.6">Jl. Taman Bungur</text>
-                  </svg>
-                </div>
-
-                {/* Stats Overlay on Map */}
-                <div className="absolute bottom-4 left-4 right-4">
-                  <div className="rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur-sm">
-                    <div className="mb-3 grid grid-cols-3 gap-2 text-center">
-                      <div>
-                        <div className="text-2xl font-bold text-gray-900">00:00</div>
-                        <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Time</div>
-                      </div>
-                      <div>
-                        <div className="text-4xl font-bold text-gray-900">0</div>
-                        <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Distance (KM)</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold text-gray-900">--</div>
-                        <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Speed (KM/H)</div>
-                      </div>
+              {/* Stats Overlay on Map - Much Lower position */}
+              <div className="absolute bottom-32 left-4 right-4">
+                <div className="rounded-2xl bg-white/95 p-5 shadow-lg backdrop-blur-sm">
+                  {/* Collapse Button at Top of Card */}
+                  <div className="mb-3 flex justify-center">
+                    <button
+                      onClick={() => setShowMap(false)}
+                      className="flex items-center justify-center text-blue-500"
+                    >
+                      <ChevronDown className="h-5 w-5" />
+                    </button>
+                  </div>
+                  
+                  <div className="mb-5 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900">00:00</div>
+                      <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Time</div>
                     </div>
+                    <div>
+                      <div className="text-4xl font-bold text-gray-900">0</div>
+                      <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Distance (KM)</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-gray-900">--</div>
+                      <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Speed (KM/H)</div>
+                    </div>
+                  </div>
+                  {/* Play Button inside card */}
+                  <div className="flex justify-center">
+                    <button
+                      onClick={handleStart}
+                      className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg transition-all hover:scale-105"
+                    >
+                      <svg className="h-8 w-8 text-white" fill="white" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Play Button */}
-            <div className="flex justify-center px-5">
-              <button
-                onClick={handleStart}
-                className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg transition-all hover:scale-105"
-              >
-                <svg className="h-10 w-10 text-white" fill="white" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </button>
             </div>
           </>
         )}
@@ -185,75 +182,96 @@ export default function RecordPage() {
         {/* Recording/Paused State */}
         {!isIdle && (
           <>
-            {/* Collapse Button at Top */}
-            <div className="flex justify-center pt-5 pb-2">
-              <button
-                onClick={() => setShowMap(!showMap)}
-                className="flex items-center justify-center text-blue-500"
-              >
-                {showMap ? <ChevronDown className="h-6 w-6" /> : <ChevronUp className="h-6 w-6" />}
-              </button>
-            </div>
-
             {/* Map View */}
             {showMap && (
-              <div className="mx-5 mb-4 flex-1 overflow-hidden rounded-2xl bg-white shadow-sm">
-                <div className="relative h-full min-h-[400px] bg-gradient-to-br from-gray-100 to-gray-200">
-                  {/* Mock Map Background */}
-                  <div className="absolute inset-0 opacity-30">
-                    <svg className="h-full w-full" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
-                      <defs>
-                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#999" strokeWidth="0.5"/>
-                        </pattern>
-                      </defs>
-                      <rect width="400" height="600" fill="url(#grid)" />
-                      <text x="50" y="150" fontSize="10" fill="#666" opacity="0.6">Jl. Nusantara</text>
-                      <text x="200" y="300" fontSize="10" fill="#666" opacity="0.6">Quest House</text>
-                      <text x="100" y="450" fontSize="10" fill="#666" opacity="0.6">Jl. Taman Bungur</text>
-                    </svg>
-                  </div>
-
-                  {/* Running Route */}
-                  <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
-                    <path
-                      d="M 80 300 Q 120 220, 180 260 T 280 290 Q 320 320, 320 400 L 280 440 Q 240 470, 180 430 T 100 370 Q 80 340, 80 300"
-                      fill="none"
-                      stroke="#3B82F6"
-                      strokeWidth="5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className={isRecording ? 'animate-pulse' : ''}
-                    />
-                    <circle cx="80" cy="300" r="8" fill="#10B981" stroke="white" strokeWidth="3" />
-                    {isRecording && (
-                      <g>
-                        <circle cx="320" cy="400" r="10" fill="#3B82F6" opacity="0.3">
-                          <animate attributeName="r" from="10" to="20" dur="1.5s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" from="0.3" to="0" dur="1.5s" repeatCount="indefinite" />
-                        </circle>
-                        <circle cx="320" cy="400" r="8" fill="#3B82F6" stroke="white" strokeWidth="3" />
-                      </g>
-                    )}
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200">
+                {/* Mock Map Background - Full Screen */}
+                <div className="absolute inset-0">
+                  <svg className="h-full w-full" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
+                    <defs>
+                      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#999" strokeWidth="0.5"/>
+                      </pattern>
+                    </defs>
+                    <rect width="400" height="600" fill="url(#grid)" />
+                    <text x="50" y="150" fontSize="10" fill="#666" opacity="0.6">Jl. Nusantara</text>
+                    <text x="200" y="300" fontSize="10" fill="#666" opacity="0.6">Quest House</text>
+                    <text x="100" y="450" fontSize="10" fill="#666" opacity="0.6">Jl. Taman Bungur</text>
                   </svg>
+                </div>
 
-                  {/* Stats Overlay on Map */}
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="rounded-2xl bg-white/95 p-4 shadow-lg backdrop-blur-sm">
-                      <div className="mb-3 grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <div className="text-2xl font-bold text-gray-900">{formatTime(timer)}</div>
-                          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Time</div>
-                        </div>
-                        <div>
-                          <div className="text-4xl font-bold text-gray-900">{Math.floor(distance)}</div>
-                          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Distance (KM)</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-gray-900">--</div>
-                          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Speed (KM/H)</div>
-                        </div>
+                {/* Running Route - Full Screen */}
+                <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
+                  <path
+                    d="M 80 300 Q 120 220, 180 260 T 280 290 Q 320 320, 320 400 L 280 440 Q 240 470, 180 430 T 100 370 Q 80 340, 80 300"
+                    fill="none"
+                    stroke="#3B82F6"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={isRecording ? 'animate-pulse' : ''}
+                  />
+                  <circle cx="80" cy="300" r="8" fill="#10B981" stroke="white" strokeWidth="3" />
+                  {isRecording && (
+                    <g>
+                      <circle cx="320" cy="400" r="10" fill="#3B82F6" opacity="0.3">
+                        <animate attributeName="r" from="10" to="20" dur="1.5s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" from="0.3" to="0" dur="1.5s" repeatCount="indefinite" />
+                      </circle>
+                      <circle cx="320" cy="400" r="8" fill="#3B82F6" stroke="white" strokeWidth="3" />
+                    </g>
+                  )}
+                </svg>
+
+                {/* Stats Overlay on Map - Much Lower position */}
+                <div className="absolute bottom-32 left-4 right-4">
+                  <div className="rounded-2xl bg-white/95 p-5 shadow-lg backdrop-blur-sm">
+                    {/* Collapse Button at Top of Card */}
+                    <div className="mb-3 flex justify-center">
+                      <button
+                        onClick={() => setShowMap(false)}
+                        className="flex items-center justify-center text-blue-500"
+                      >
+                        <ChevronDown className="h-5 w-5" />
+                      </button>
+                    </div>
+                    
+                    <div className="mb-5 grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">{formatTime(timer)}</div>
+                        <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Time</div>
                       </div>
+                      <div>
+                        <div className="text-4xl font-bold text-gray-900">{Math.floor(distance)}</div>
+                        <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Distance (KM)</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-gray-900">--</div>
+                        <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400">Speed (KM/H)</div>
+                      </div>
+                    </div>
+                    {/* Control Buttons inside card */}
+                    <div className="flex items-center justify-center gap-3">
+                      <button
+                        onClick={handleStop}
+                        className="flex h-14 w-28 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-md transition-all hover:scale-105"
+                      >
+                        <div className="h-4 w-4 rounded bg-white" />
+                      </button>
+                      <button
+                        onClick={isRecording ? handlePause : handleResume}
+                        className="flex h-14 w-28 items-center justify-center gap-2 rounded-full bg-white shadow-md transition-all hover:scale-105"
+                      >
+                        {isRecording ? (
+                          <svg className="h-6 w-6 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                          </svg>
+                        ) : (
+                          <svg className="h-6 w-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -263,6 +281,16 @@ export default function RecordPage() {
             {/* Stats View (when map collapsed) */}
             {!showMap && (
               <>
+                {/* Expand Button at Top */}
+                <div className="flex justify-center pt-5 pb-2">
+                  <button
+                    onClick={() => setShowMap(true)}
+                    className="flex items-center justify-center text-blue-500"
+                  >
+                    <ChevronUp className="h-6 w-6" />
+                  </button>
+                </div>
+
                 {/* Status Badge */}
                 <div className="flex justify-center pb-6">
                   <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-sm">
@@ -292,49 +320,34 @@ export default function RecordPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Control Buttons for collapsed view */}
+                <div className="px-5">
+                  <div className="flex items-center justify-center gap-4">
+                    <button
+                      onClick={handleStop}
+                      className="flex h-16 w-32 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-lg transition-all hover:scale-105"
+                    >
+                      <div className="h-5 w-5 rounded bg-white" />
+                    </button>
+                    <button
+                      onClick={isRecording ? handlePause : handleResume}
+                      className="flex h-16 w-32 items-center justify-center gap-2 rounded-full bg-white shadow-lg transition-all hover:scale-105"
+                    >
+                      {isRecording ? (
+                        <svg className="h-8 w-8 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                        </svg>
+                      ) : (
+                        <svg className="h-8 w-8 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </>
             )}
-
-            {/* Control Buttons */}
-            <div className="px-5">
-              {isRecording && (
-                <div className="flex items-center justify-center gap-4">
-                  <button
-                    onClick={handleStop}
-                    className="flex h-16 w-32 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-lg transition-all hover:scale-105"
-                  >
-                    <div className="h-5 w-5 rounded bg-white" />
-                  </button>
-                  <button
-                    onClick={handlePause}
-                    className="flex h-16 w-32 items-center justify-center gap-2 rounded-full bg-white shadow-lg transition-all hover:scale-105"
-                  >
-                    <svg className="h-8 w-8 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-
-              {recordState === 'paused' && (
-                <div className="flex items-center justify-center gap-4">
-                  <button
-                    onClick={handleStop}
-                    className="flex h-16 w-32 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-lg transition-all hover:scale-105"
-                  >
-                    <div className="h-5 w-5 rounded bg-white" />
-                  </button>
-                  <button
-                    onClick={handleResume}
-                    className="flex h-16 w-32 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg transition-all hover:scale-105"
-                  >
-                    <svg className="h-8 w-8 text-white" fill="white" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-            </div>
           </>
         )}
       </div>
