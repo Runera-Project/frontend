@@ -10,7 +10,7 @@ export default function Home() {
         <Header />
         <QuestCard />
         <ActivityFeed />
-        <BottomNavigation />
+        <BottomNavigation activeTab="Home" />
       </div>
     </div>
   );
