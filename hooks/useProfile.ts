@@ -39,35 +39,22 @@ export function useProfile(address?: Address) {
   // Use balanceOf as fallback if hasProfile doesn't work
   const hasProfileFallback = tokenBalance !== undefined && tokenBalance > 0n;
 
-  // Log hasProfile status for debugging
+  // Log hasProfile status for debugging (only when changed)
   useEffect(() => {
-    if (address) {
-      console.log('=== Profile Check ===');
-      console.log('User address:', address);
-      console.log('Contract address:', CONTRACTS.ProfileNFT);
-      console.log('Has profile (from hasProfile):', hasProfile);
-      console.log('Token balance (from balanceOf):', tokenBalance?.toString());
-      console.log('Has profile (fallback):', hasProfileFallback);
-      console.log('Is checking:', isCheckingProfile);
-      
-      // More detailed check
-      if (hasProfile === true) {
-        console.log('✅ USER HAS PROFILE (hasProfile)!');
-      } else if (hasProfile === false) {
-        console.log('❌ USER DOES NOT HAVE PROFILE (hasProfile)');
-      } else if (hasProfile === undefined) {
-        console.log('⏳ hasProfile STILL LOADING...');
-      }
-
-      if (hasProfileFallback) {
-        console.log('✅ USER HAS PROFILE (balanceOf fallback)!');
-      } else {
-        console.log('❌ USER DOES NOT HAVE PROFILE (balanceOf fallback)');
+    if (address && hasProfile !== undefined) {
+      const logKey = `profile-check-${address}-${hasProfile}`;
+      if (!sessionStorage.getItem(logKey)) {
+        console.log('Profile Check:', {
+          address: address.slice(0, 6) + '...' + address.slice(-4),
+          hasProfile,
+          tokenBalance: tokenBalance?.toString(),
+        });
+        sessionStorage.setItem(logKey, 'true');
       }
     }
-  }, [address, hasProfile, tokenBalance, hasProfileFallback, isCheckingProfile]);
+  }, [address, hasProfile, tokenBalance]);
 
-  // Get profile data
+  // Get profile data (now with correct ABI!)
   const { data: profileData, isLoading: isLoadingProfile, refetch: refetchProfile, error: profileError } = useReadContract({
     address: CONTRACTS.ProfileNFT,
     abi: ABIS.ProfileNFT,
@@ -78,15 +65,15 @@ export function useProfile(address?: Address) {
     },
   });
 
-  // Log profile fetch errors
+  // Log profile fetch errors (now with correct ABI!)
   useEffect(() => {
-    if (profileError) {
-      console.error('=== Profile Fetch Error ===');
-      console.error('Error:', profileError);
-      console.error('This means getProfile() function has ABI mismatch');
-      console.error('Profile exists but cannot fetch data');
+    if (profileError && address) {
+      console.error('✅ Profile fetch error with NEW ABI:', profileError.message);
+      console.error('Check contract address and network. ABI should be correct now.');
+    } else if (profileData && address) {
+      console.log('✅ Profile data fetched successfully with NEW ABI!');
     }
-  }, [profileError]);
+  }, [profileError, profileData, address]);
 
   // Register profile
   const { 
@@ -100,36 +87,28 @@ export function useProfile(address?: Address) {
     hash: registerHash,
   });
 
-  // Log transaction status
+  // Log transaction status (only important updates)
   useEffect(() => {
-    if (registerHash) {
-      console.log('=== Transaction Status ===');
-      console.log('Transaction hash:', registerHash);
-      console.log('Is confirming:', isConfirming);
-      console.log('Is confirmed:', isConfirmed);
-      console.log('BaseScan:', `https://basescan.org/tx/${registerHash}`);
+    if (registerHash && isConfirmed) {
+      console.log('✅ Profile registered!', `https://sepolia.basescan.org/tx/${registerHash}`);
     }
-  }, [registerHash, isConfirming, isConfirmed]);
+  }, [registerHash, isConfirmed]);
 
-  // Log errors
+  // Log errors (only once per session)
   useEffect(() => {
-    if (registerError) {
-      console.error('=== Registration Error ===');
-      console.error('Error:', registerError);
-      console.error('Message:', registerError.message);
+    if (registerError && address) {
+      const errorKey = `register-error-${address}`;
+      if (!sessionStorage.getItem(errorKey)) {
+        console.error('Registration Error:', registerError.message);
+        sessionStorage.setItem(errorKey, 'true');
+      }
     }
-  }, [registerError]);
+  }, [registerError, address]);
 
   const registerProfile = async () => {
     try {
-      console.log('=== Starting Registration ===');
-      console.log('Contract address:', CONTRACTS.ProfileNFT);
-      console.log('User address:', address);
-      console.log('Current hasProfile:', hasProfile);
-      console.log('Current hasProfileFallback:', hasProfileFallback);
-      
       if (hasProfile || hasProfileFallback) {
-        console.warn('User already has profile! Skipping registration.');
+        console.warn('User already has profile!');
         return;
       }
       
@@ -143,32 +122,28 @@ export function useProfile(address?: Address) {
     }
   };
 
-  // Format profile data
-  const profile = profileData ? {
-    tier: Number(profileData.tier),
-    tierName: TIER_NAMES[Number(profileData.tier) as keyof typeof TIER_NAMES],
+  // Format profile data (NEW ABI2 structure!)
+  const profile = profileData && profileData.exists ? {
+    // Calculate tier based on XP/Level (frontend calculation for now)
+    tier: Math.min(Math.floor(Number(profileData.level) / 10) + 1, 5), // Level 0-9=Bronze, 10-19=Silver, etc.
+    tierName: TIER_NAMES[Math.min(Math.floor(Number(profileData.level) / 10) + 1, 5) as keyof typeof TIER_NAMES],
     stats: {
-      totalDistance: Number(formatUnits(profileData.stats.totalDistance, 3)), // meters to km
-      totalActivities: Number(profileData.stats.totalActivities),
-      totalDuration: Number(profileData.stats.totalDuration), // seconds
-      currentStreak: Number(profileData.stats.currentStreak),
-      longestStreak: Number(profileData.stats.longestStreak),
-      lastActivityTimestamp: Number(profileData.stats.lastActivityTimestamp),
+      totalDistance: Number(profileData.totalDistanceMeters) / 1000, // meters to km
+      totalActivities: Number(profileData.runCount),
+      totalDuration: 0, // Not in new ABI, set to 0
+      currentStreak: 0, // Not in new ABI, set to 0
+      longestStreak: Number(profileData.longestStreakDays),
+      lastActivityTimestamp: Number(profileData.lastUpdated),
     },
-    registeredAt: Number(profileData.registeredAt),
-    tokenId: profileData.tokenId,
+    xp: Number(profileData.xp),
+    level: Number(profileData.level),
+    achievementCount: Number(profileData.achievementCount),
+    registeredAt: 0, // Not in new ABI
+    tokenId: address ? BigInt(address) : 0n, // Token ID is derived from address
   } : null;
 
   // Use fallback if hasProfile doesn't work OR if balanceOf works
-  // Priority: hasProfile === true OR hasProfileFallback === true
   const finalHasProfile = hasProfile === true || hasProfileFallback === true;
-
-  useEffect(() => {
-    console.log('=== Final Decision ===');
-    console.log('hasProfile:', hasProfile);
-    console.log('hasProfileFallback:', hasProfileFallback);
-    console.log('finalHasProfile:', finalHasProfile);
-  }, [hasProfile, hasProfileFallback, finalHasProfile]);
 
   // If hasProfile is true but profile data is null, create dummy profile
   const finalProfile = profile || (finalHasProfile ? {
@@ -186,22 +161,21 @@ export function useProfile(address?: Address) {
     tokenId: 0n,
   } : null);
 
-  // Log profile data
+  // Log profile data (only once per session)
   useEffect(() => {
-    if (finalProfile) {
-      console.log('=== Profile Data ===');
-      console.log('Tier:', finalProfile.tier, '-', finalProfile.tierName);
-      console.log('Total Distance:', finalProfile.stats.totalDistance, 'km');
-      console.log('Total Activities:', finalProfile.stats.totalActivities);
-      if (finalProfile.tokenId) {
-        console.log('Token ID:', finalProfile.tokenId.toString());
-      }
-      if (!profileData && finalHasProfile) {
-        console.warn('⚠️ Using dummy profile data because getProfile() failed');
-        console.warn('⚠️ This is due to ABI mismatch - need real ABI from Foundry');
+    if (finalProfile && address) {
+      const logKey = `profile-data-${address}`;
+      if (!sessionStorage.getItem(logKey)) {
+        console.log('Profile loaded:', {
+          tier: finalProfile.tierName,
+          distance: finalProfile.stats.totalDistance + ' km',
+          activities: finalProfile.stats.totalActivities,
+          usingDummyData: !profileData && finalHasProfile,
+        });
+        sessionStorage.setItem(logKey, 'true');
       }
     }
-  }, [finalProfile, profileData, finalHasProfile]);
+  }, [finalProfile, address, profileData, finalHasProfile]);
 
   return {
     hasProfile: finalHasProfile,
@@ -214,7 +188,6 @@ export function useProfile(address?: Address) {
     tokenBalance,
     hasProfileFallback,
     refetch: () => {
-      console.log('=== Refetching Profile ===');
       refetchHasProfile();
       refetchProfile();
     },

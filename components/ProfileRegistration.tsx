@@ -53,7 +53,13 @@ export function ProfileRegistration() {
   }, [isRegistering, isConfirmed, refetch]);
 
   // Don't show if already has profile or not connected
-  if (!address || hasProfile) return null;
+  // Add extra check to prevent showing when profile exists
+  if (!address || hasProfile || showSuccess) {
+    console.log('ProfileRegistration: Not showing modal', { address: !!address, hasProfile, showSuccess });
+    return null;
+  }
+
+  console.log('ProfileRegistration: Showing modal', { address, hasProfile });
 
   // Show success state
   if (showSuccess) {
