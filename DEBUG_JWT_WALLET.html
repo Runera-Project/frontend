@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug JWT Wallet Mismatch</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 20px;
+      border-radius: 10px;
+      background: #f8f9fa;
+    }
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 2px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 2px solid #f5c6cb;
+    }
+    .warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 2px solid #ffeaa7;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 2px solid #bee5eb;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 5px;
+      transition: transform 0.2s;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    .code {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      margin: 10px 0;
+    }
+    .wallet-address {
+      font-family: 'Courier New', monospace;
+      background: #e9ecef;
+      padding: 8px 12px;
+      border-radius: 6px;
+      word-break: break-all;
+      margin: 5px 0;
+    }
+    .label {
+      font-weight: bold;
+      color: #495057;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 JWT Wallet Mismatch Debugger</h1>
+    <p class="subtitle">Check if your JWT token wallet matches your current MetaMask wallet</p>
+
+    <div class="section">
+      <h2>📊 Current Status</h2>
+      <div id="status"></div>
+    </div>
+
+    <div class="section">
+      <h2>🔧 Actions</h2>
+      <button onclick="checkStatus()">🔄 Refresh Status</button>
+      <button onclick="clearStorage()">🗑️ Clear Storage & Re-login</button>
+      <button onclick="showJWTDetails()">🔐 Show JWT Details</button>
+    </div>
+
+    <div class="section" id="jwt-details" style="display: none;">
+      <h2>🔐 JWT Token Details</h2>
+      <div id="jwt-content"></div>
+    </div>
+
+    <div class="section">
+      <h2>📝 Instructions</h2>
+      <ol>
+        <li><strong>Check Status:</strong> Click "Refresh Status" to see if there's a mismatch</li>
+        <li><strong>If Mismatch Found:</strong> Click "Clear Storage & Re-login"</li>
+        <li><strong>Re-login:</strong> Go to <code>/login</code> page and sign in with your current wallet</li>
+        <li><strong>Test Transaction:</strong> Try submitting a run again</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    function decodeJWT(token) {
+      try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        
+        const payload = parts[1];
+        const decoded = JSON.parse(atob(payload));
+        return decoded;
+      } catch (error) {
+        console.error('Failed to decode JWT:', error);
+        return null;
+      }
+    }
+
+    function checkStatus() {
+      const statusDiv = document.getElementById('status');
+      statusDiv.innerHTML = '<p>Checking...</p>';
+
+      // Get JWT token
+      const jwtToken = localStorage.getItem('runera_token');
+      
+      // Get current wallet from MetaMask
+      const currentWallet = window.ethereum?.selectedAddress;
+
+      let html = '';
+
+      // JWT Token Status
+      if (!jwtToken) {
+        html += '<div class="status warning">⚠️ No JWT token found in localStorage</div>';
+        html += '<p>You need to login first. Go to <code>/login</code> page.</p>';
+      } else {
+        html += '<div class="status success">✅ JWT token found</div>';
+        
+        const decoded = decodeJWT(jwtToken);
+        if (decoded) {
+          const jwtWallet = decoded.walletAddress?.toLowerCase();
+          html += '<div class="label">JWT Wallet Address:</div>';
+          html += `<div class="wallet-address">${jwtWallet || 'Not found in JWT'}</div>`;
+          
+          // Check expiration
+          if (decoded.exp) {
+            const expDate = new Date(decoded.exp * 1000);
+            const now = new Date();
+            if (expDate < now) {
+              html += '<div class="status error">❌ JWT token has EXPIRED</div>';
+              html += `<p>Expired at: ${expDate.toLocaleString()}</p>`;
+            } else {
+              html += '<div class="status success">✅ JWT token is valid</div>';
+              html += `<p>Expires at: ${expDate.toLocaleString()}</p>`;
+            }
+          }
+        }
+      }
+
+      // MetaMask Status
+      if (!window.ethereum) {
+        html += '<div class="status error">❌ MetaMask not detected</div>';
+      } else if (!currentWallet) {
+        html += '<div class="status warning">⚠️ No wallet connected in MetaMask</div>';
+      } else {
+        html += '<div class="status success">✅ MetaMask wallet connected</div>';
+        html += '<div class="label">Current MetaMask Wallet:</div>';
+        html += `<div class="wallet-address">${currentWallet.toLowerCase()}</div>`;
+      }
+
+      // Compare wallets
+      if (jwtToken && currentWallet) {
+        const decoded = decodeJWT(jwtToken);
+        if (decoded && decoded.walletAddress) {
+          const jwtWallet = decoded.walletAddress.toLowerCase();
+          const metamaskWallet = currentWallet.toLowerCase();
+          
+          if (jwtWallet === metamaskWallet) {
+            html += '<div class="status success">✅ WALLETS MATCH! You should be able to submit transactions.</div>';
+          } else {
+            html += '<div class="status error">❌ WALLET MISMATCH DETECTED!</div>';
+            html += '<p><strong>This is why your transactions are failing!</strong></p>';
+            html += '<p>JWT wallet and MetaMask wallet are different.</p>';
+            html += '<p><strong>Solution:</strong> Click "Clear Storage & Re-login" button above, then login with your current MetaMask wallet.</p>';
+          }
+        }
+      }
+
+      statusDiv.innerHTML = html;
+    }
+
+    function clearStorage() {
+      if (!confirm('This will clear your JWT token and you will need to login again. Continue?')) {
+        return;
+      }
+
+      // Clear JWT token
+      localStorage.removeItem('runera_token');
+      
+      // Clear Privy tokens (if any)
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('privy:')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      alert('✅ Storage cleared! Please go to /login page and sign in with your current wallet.');
+      checkStatus();
+    }
+
+    function showJWTDetails() {
+      const detailsDiv = document.getElementById('jwt-details');
+      const contentDiv = document.getElementById('jwt-content');
+      
+      const jwtToken = localStorage.getItem('runera_token');
+      
+      if (!jwtToken) {
+        contentDiv.innerHTML = '<div class="status warning">No JWT token found</div>';
+        detailsDiv.style.display = 'block';
+        return;
+      }
+
+      const decoded = decodeJWT(jwtToken);
+      
+      let html = '<div class="label">Raw Token (first 50 chars):</div>';
+      html += `<div class="code">${jwtToken.substring(0, 50)}...</div>`;
+      
+      html += '<div class="label">Decoded Payload:</div>';
+      html += `<div class="code">${JSON.stringify(decoded, null, 2)}</div>`;
+      
+      contentDiv.innerHTML = html;
+      detailsDiv.style.display = 'block';
+    }
+
+    // Auto-check on load
+    window.addEventListener('load', () => {
+      checkStatus();
+      
+      // Listen for wallet changes
+      if (window.ethereum) {
+        window.ethereum.on('accountsChanged', (accounts) => {
+          console.log('Wallet changed:', accounts);
+          setTimeout(checkStatus, 500);
+        });
+      }
+    });
+  </script>
+</body>
+</html>

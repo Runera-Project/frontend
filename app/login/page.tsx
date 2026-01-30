@@ -2,17 +2,12 @@
 
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Activity } from 'lucide-react';
-import { useAccount, useSignMessage } from 'wagmi';
-import { requestNonce, connectWallet } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
   const { ready, authenticated, login } = usePrivy();
-  const { address, isConnected } = useAccount();
-  const { signMessageAsync } = useSignMessage();
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -20,54 +15,6 @@ export default function LoginPage() {
       router.push('/');
     }
   }, [ready, authenticated, router]);
-
-  // Auto-authenticate with backend when wallet is connected
-  useEffect(() => {
-    const authenticateWithBackend = async () => {
-      if (!address || !isConnected || isAuthenticating) return;
-      
-      // Check if already have token
-      const existingToken = localStorage.getItem('runera_token');
-      if (existingToken) {
-        console.log('✅ Already have JWT token');
-        return;
-      }
-
-      setIsAuthenticating(true);
-      
-      try {
-        console.log('🔐 Requesting nonce from backend...');
-        
-        // Step 1: Request nonce
-        const { nonce, message } = await requestNonce({ walletAddress: address });
-        console.log('✅ Nonce received:', nonce);
-        
-        // Step 2: Sign message
-        console.log('✍️ Requesting signature from wallet...');
-        const signature = await signMessageAsync({ message });
-        console.log('✅ Message signed');
-        
-        // Step 3: Connect and get JWT
-        console.log('🔗 Connecting to backend...');
-        const { token } = await connectWallet({
-          walletAddress: address,
-          signature,
-          message,
-          nonce,
-        });
-        
-        console.log('✅ JWT token received and saved!');
-        
-      } catch (error) {
-        console.error('❌ Backend authentication failed:', error);
-        // Don't block user - they can still use app with localStorage fallback
-      } finally {
-        setIsAuthenticating(false);
-      }
-    };
-
-    authenticateWithBackend();
-  }, [address, isConnected, signMessageAsync, isAuthenticating]);
 
   if (!ready) {
     return (
@@ -107,17 +54,10 @@ export default function LoginPage() {
           {/* Login Button */}
           <button
             onClick={login}
-            disabled={isAuthenticating}
-            className="w-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-lg font-semibold text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl active:scale-[0.98]"
           >
-            {isAuthenticating ? 'Authenticating...' : 'Sign In'}
+            Sign In
           </button>
-
-          {isAuthenticating && (
-            <p className="mt-4 text-center text-sm text-gray-500">
-              Please sign the message in your wallet...
-            </p>
-          )}
 
           {/* Features */}
           <div className="mt-8 space-y-3">

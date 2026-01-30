@@ -4,15 +4,16 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle2, MapPin, Clock, TrendingUp, Share2 } from 'lucide-react';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Suspense, useState } from 'react';
-import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
+import { useAccount, useWriteContract, useSwitchChain } from 'wagmi';
 import { submitRun } from '@/lib/api';
 import { CONTRACTS, ABIS } from '@/lib/contracts';
+import { baseSepolia } from 'viem/chains';
 
 function ValidateContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { address } = useAccount();
-  const publicClient = usePublicClient();
+  const { address, chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const [title, setTitle] = useState('Morning Run');
   const [isPosting, setIsPosting] = useState(false);
   const [useDummyData, setUseDummyData] = useState(false);
@@ -202,6 +203,23 @@ function ValidateContent() {
         try {
           const { stats, signature, deadline, nonce } = result.onchainSync;
           
+          // ⚠️ CRITICAL: Check and switch to Base Sepolia if needed
+          console.log('🔍 Current chain:', chain?.id, chain?.name);
+          console.log('🎯 Target chain:', baseSepolia.id, baseSepolia.name);
+          
+          if (chain?.id !== baseSepolia.id) {
+            console.log('⚠️ Wrong network! Switching to Base Sepolia...');
+            try {
+              await switchChainAsync({ chainId: baseSepolia.id });
+              console.log('✅ Switched to Base Sepolia!');
+            } catch (switchError: any) {
+              console.error('❌ Failed to switch network:', switchError);
+              throw new Error(`Please switch to Base Sepolia network in your wallet!\n\nCurrent: ${chain?.name}\nRequired: Base Sepolia`);
+            }
+          } else {
+            console.log('✅ Already on Base Sepolia');
+          }
+          
           // Log nonce from backend (we'll check it manually if needed)
           console.log('📊 Backend nonce:', nonce);
           console.log('⚠️ If transaction fails, check nonce mismatch using scripts/check-nonce.html');
@@ -374,6 +392,37 @@ function ValidateContent() {
             </div>
           </div>
         </header>
+
+        {/* Network Warning */}
+        {chain && chain.id !== baseSepolia.id && (
+          <div className="mx-5 mb-5 rounded-xl bg-red-50 border-2 border-red-200 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-red-900 mb-1">Wrong Network!</h3>
+                <p className="text-xs text-red-700 mb-2">
+                  You're on <span className="font-semibold">{chain.name}</span>. Please switch to <span className="font-semibold">Base Sepolia</span> to submit your run.
+                </p>
+                <button
+                  onClick={async () => {
+                    try {
+                      await switchChainAsync({ chainId: baseSepolia.id });
+                    } catch (error) {
+                      console.error('Failed to switch network:', error);
+                    }
+                  }}
+                  className="text-xs font-bold text-red-600 hover:text-red-800 underline"
+                >
+                  Switch to Base Sepolia
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Map Preview */}
         <div className="mx-5 mb-5 overflow-hidden rounded-xl bg-white shadow-sm">
