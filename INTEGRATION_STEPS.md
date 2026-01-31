@@ -70,12 +70,12 @@ export const CONTRACTS = {
   Marketplace: (process.env.NEXT_PUBLIC_CONTRACT_MARKETPLACE || '0x0') as Address,
 } as const;
 
-// Import ABIs
-import ProfileABI from '@/ABI/RuneraProfileDynamicNFTABI.json';
-import CosmeticABI from '@/ABI/RuneraCosmeticNFTABI.json';
-import AchievementABI from '@/ABI/RuneraAchievementDynamicNFTABI.json';
-import EventABI from '@/ABI/RuneraEventRegistryABI.json';
-import MarketplaceABI from '@/ABI/RuneraMarketplaceABI.json';
+// Import ABIs dari ABI2 (GUNAKAN INI!)
+import ProfileABI from '@/ABI2/RuneraProfileABI.json';
+import CosmeticABI from '@/ABI2/RuneraCosmeticNFTABI.json';
+import AchievementABI from '@/ABI2/RuneraAchievementABI.json';
+import EventABI from '@/ABI2/RuneraEventRegistryABI.json';
+import MarketplaceABI from '@/ABI2/RuneraMarketplaceABI.json';
 
 export const ABIS = {
   ProfileNFT: ProfileABI,

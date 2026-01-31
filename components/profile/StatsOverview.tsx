@@ -1,10 +1,47 @@
+'use client';
+
 import { MapPin, Activity, Clock } from 'lucide-react';
 
-export default function StatsOverview() {
+interface StatsOverviewProps {
+  profile?: {
+    stats: {
+      totalDistance: number;
+      totalActivities: number;
+      totalDuration: number;
+    };
+  };
+}
+
+export default function StatsOverview({ profile }: StatsOverviewProps) {
+  if (!profile) {
+    return (
+      <div className="mx-6 mb-6 grid grid-cols-3 gap-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl bg-white p-4 shadow-sm animate-pulse">
+            <div className="h-12 w-12 bg-gray-200 rounded-xl mx-auto mb-3" />
+            <div className="h-3 bg-gray-200 rounded mb-2" />
+            <div className="h-6 bg-gray-200 rounded mb-1" />
+            <div className="h-3 bg-gray-200 rounded w-12 mx-auto" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Calculate average pace (min/km)
+  const avgPace = profile.stats.totalActivities > 0 && profile.stats.totalDistance > 0
+    ? (profile.stats.totalDuration / 60) / profile.stats.totalDistance
+    : 0;
+  
+  // Format pace as MM:SS
+  const paceMinutes = Math.floor(avgPace);
+  const paceSeconds = Math.floor((avgPace - paceMinutes) * 60);
+  const formattedPace = avgPace > 0 ? `${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}` : '--';
+
   const stats = [
     {
       label: 'Total Dist',
-      value: '124',
+      value: profile.stats.totalDistance.toFixed(1),
       unit: 'km',
       icon: MapPin,
       bgColor: 'bg-orange-50',
@@ -12,7 +49,7 @@ export default function StatsOverview() {
     },
     {
       label: 'Runs',
-      value: '15',
+      value: profile.stats.totalActivities.toString(),
       unit: '',
       icon: Activity,
       bgColor: 'bg-blue-50',
@@ -20,7 +57,7 @@ export default function StatsOverview() {
     },
     {
       label: 'Avg Pace',
-      value: '5:30',
+      value: formattedPace,
       unit: 'min/km',
       icon: Clock,
       bgColor: 'bg-green-50',

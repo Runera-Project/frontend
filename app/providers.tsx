@@ -1,7 +1,7 @@
 "use client";
 
-import { PrivyProvider } from "@privy-io/react-auth";
-import { base } from "viem/chains";
+import { PrivyProvider } from '@privy-io/react-auth';
+import { base } from 'viem/chains';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -17,21 +17,35 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           loginMessage: "Sign in to track your runs and earn rewards",
         },
         // Login methods - Email, Google, Wallet
-        loginMethods: ["email", "google", "wallet"],
+        loginMethods: ['email', 'google', 'wallet'],
         // Embedded wallet configuration
         embeddedWallets: {
-          ethereum: {
-            createOnLogin: "users-without-wallets",
-          },
+          createOnLogin: 'users-without-wallets',
+          requireUserPasswordOnCreate: false,
         },
-        // Default chain - Base network
-        defaultChain: base,
-        supportedChains: [base],
+        // Default chain - Base Sepolia Testnet
+        defaultChain: baseSepolia,
+        supportedChains: [baseSepolia],
         // Wallet configuration
         walletConnectCloudProjectId: undefined,
+        // Session persistence - Keep user logged in
+        legal: {
+          termsAndConditionsUrl: undefined,
+          privacyPolicyUrl: undefined,
+        },
+        // Disable auto-logout on page refresh
+        mfa: {
+          noPromptOnMfaRequired: false,
+        },
       }}
     >
-      {children}
+      <QueryClientProvider client={queryClient}>
+        <WagmiProvider config={config}>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </WagmiProvider>
+      </QueryClientProvider>
     </PrivyProvider>
   );
 }

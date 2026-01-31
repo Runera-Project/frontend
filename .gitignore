@@ -39,3 +39,39 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Backend and Smart Contract (separate repos)
+/Backend/
+/SmartContract/
+
+# Documentation files (except README)
+*_COMPLETE.md
+*_FIX.md
+*_FIXED.md
+*_IMPLEMENTED.md
+*_ANALYSIS.md
+*_STATUS.md
+*_GUIDE.md
+*_PLAN.md
+*_STEPS.md
+*_CHECKLIST.md
+*_ISSUE.md
+*_ERROR.md
+*_DEBUG.md
+*_TESTING.md
+*_SETUP.md
+*_SOLUTION.md
+*_SUMMARY.md
+*_DIAGNOSIS.md
+*_REFACTOR.md
+*_UPDATE.md
+*_INTEGRATION.md
+*_IMPROVEMENTS.md
+*_SYSTEM.md
+PANDUAN_*.md
+RINGKASAN_*.md
+STATUS_*.md
+INTEGRASI_*.md
+MIGRASI_*.md
+VERIFIKASI_*.md
+FOLDER_*.md

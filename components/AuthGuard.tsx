@@ -8,6 +8,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { ready, authenticated } = usePrivy();
 
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (ready && !authenticated) {
       router.push('/login');

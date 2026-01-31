@@ -1,7 +1,11 @@
 'use client';
 
 import { Users } from 'lucide-react';
-import Image from 'next/image';
+import { useAccount } from 'wagmi';
+import { useProfile } from '@/hooks/useProfile';
+import { usePrivy } from '@privy-io/react-auth';
+import { TIER_COLORS } from '@/lib/contracts';
+import { User } from 'lucide-react';
 
 interface ProfilePreviewProps {
   selectedSkin: {
@@ -12,8 +16,38 @@ interface ProfilePreviewProps {
 }
 
 export default function ProfilePreview({ selectedSkin }: ProfilePreviewProps) {
+  const { address } = useAccount();
+  const { profile, isLoading } = useProfile(address);
+  const { user } = usePrivy();
+
+  // Get username from Privy
+  const username = user?.email?.address?.split('@')[0] || user?.wallet?.address?.slice(0, 8) || 'User';
+  const displayName = username.charAt(0).toUpperCase() + username.slice(1);
+  const walletAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '0x8F31cB2E90';
+
+  // Get tier gradient from profile
+  const tierGradient = profile ? TIER_COLORS[profile.tier as keyof typeof TIER_COLORS] : 'from-yellow-400 to-orange-400';
+  
+  // Use selected skin gradient or default
   const defaultGradient = 'from-purple-600 via-pink-500 to-red-500';
   const bannerGradient = selectedSkin?.gradient || defaultGradient;
+
+  if (isLoading) {
+    return (
+      <div className="mx-6 mb-6 overflow-hidden rounded-2xl bg-white shadow-md">
+        <div className="h-32 animate-pulse bg-gray-200" />
+        <div className="relative px-6 pb-6">
+          <div className="relative -mt-12 mb-4 flex justify-center">
+            <div className="h-24 w-24 animate-pulse rounded-full bg-gray-200" />
+          </div>
+          <div className="space-y-2 text-center">
+            <div className="mx-auto h-6 w-32 animate-pulse rounded bg-gray-200" />
+            <div className="mx-auto h-4 w-24 animate-pulse rounded bg-gray-200" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-6 mb-6 overflow-hidden rounded-2xl bg-white shadow-md">
@@ -33,38 +67,24 @@ export default function ProfilePreview({ selectedSkin }: ProfilePreviewProps) {
         {/* Avatar - overlapping banner */}
         <div className="relative -mt-12 mb-4 flex justify-center">
           <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-gradient-to-br from-yellow-400 to-orange-500 shadow-lg">
-            <div className="flex h-full items-center justify-center text-4xl">
-              👤
+            <div className="flex h-full items-center justify-center">
+              <User className="h-10 w-10 text-white" />
             </div>
           </div>
         </div>
 
         {/* User Info */}
         <div className="text-center">
-          <h3 className="mb-1 text-xl font-bold text-gray-900">Bagus</h3>
-          <p className="mb-3 text-sm text-gray-500">0x8F31cB2E90</p>
-
-          {/* Stats */}
-          <div className="mb-4 flex items-center justify-center gap-4 text-sm">
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4 text-gray-400" />
-              <span className="font-semibold text-gray-900">11</span>
-              <span className="text-gray-500">followers</span>
-            </div>
-            <div className="h-4 w-px bg-gray-200" />
-            <div className="flex items-center gap-1">
-              <span className="font-semibold text-gray-900">2</span>
-              <span className="text-gray-500">following</span>
-            </div>
-          </div>
+          <h3 className="mb-1 text-xl font-bold text-gray-900">{displayName}</h3>
+          <p className="mb-4 text-sm text-gray-500">{walletAddress}</p>
 
           {/* Badges */}
           <div className="flex items-center justify-center gap-2">
-            <div className="rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 px-4 py-1.5 text-xs font-bold text-white shadow-sm">
-              Gold Runner
+            <div className={`inline-flex rounded-full bg-gradient-to-r ${tierGradient} px-6 py-2 text-sm font-bold text-white shadow-md`}>
+              {profile?.tierName || 'Bronze'} Runner
             </div>
             {selectedSkin && (
-              <div className="rounded-full bg-gradient-to-r from-purple-400 to-pink-400 px-4 py-1.5 text-xs font-bold text-white shadow-sm">
+              <div className="inline-flex rounded-full bg-gradient-to-r from-purple-400 to-pink-400 px-6 py-2 text-sm font-bold text-white shadow-md">
                 {selectedSkin.name}
               </div>
             )}

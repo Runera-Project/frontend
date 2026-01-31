@@ -5,6 +5,8 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import BackendStatus from '@/components/BackendStatus';
+import { useAccount } from 'wagmi';
 
 // Dynamic import to avoid SSR issues with Leaflet
 const MapView = dynamic(() => import('@/components/record/MapView'), {
@@ -18,19 +20,62 @@ const MapView = dynamic(() => import('@/components/record/MapView'), {
 
 type RecordState = 'idle' | 'recording' | 'paused';
 
+interface GPSPoint {
+  latitude: number;
+  longitude: number;
+  timestamp: number;
+  accuracy?: number;
+}
+
 export default function RecordPage() {
   const router = useRouter();
+  const { address } = useAccount();
+  
   const [recordState, setRecordState] = useState<RecordState>('idle');
   const [timer, setTimer] = useState(0);
   const [distance, setDistance] = useState(0);
   const [pace, setPace] = useState('0:00');
   const [showMap, setShowMap] = useState(true);
+  const [showBackendStatus, setShowBackendStatus] = useState(true);
   
   // GPS tracking states
-  const [currentPosition, setCurrentPosition] = useState<[number, number]>([-7.7956, 110.3695]); // Default: Yogyakarta
+  const [currentPosition, setCurrentPosition] = useState<[number, number]>([-7.7956, 110.3695]);
   const [route, setRoute] = useState<[number, number][]>([]);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [gpsPoints, setGpsPoints] = useState<GPSPoint[]>([]);
   const [watchId, setWatchId] = useState<number | null>(null);
+  const [startTime, setStartTime] = useState<number>(0);
+
+  // Check if coming back from validate page with paused state
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const state = params.get('state');
+    if (state === 'paused') {
+      setRecordState('paused');
+      setShowMap(true);
+    }
+  }, []);
+
+  // Update route from GPS tracking hook
+  useEffect(() => {
+    if (gpsPoints.length > 0) {
+      const newRoute = gpsPoints.map(point => [point.latitude, point.longitude] as [number, number]);
+      setRoute(newRoute);
+      
+      // Update current position to latest point
+      const latest = gpsPoints[gpsPoints.length - 1];
+      setCurrentPosition([latest.latitude, latest.longitude]);
+      
+      // Calculate total distance
+      let totalDist = 0;
+      for (let i = 1; i < gpsPoints.length; i++) {
+        const prev = gpsPoints[i - 1];
+        const curr = gpsPoints[i];
+        totalDist += calculateDistance(prev.latitude, prev.longitude, curr.latitude, curr.longitude);
+      }
+      setDistance(totalDist);
+    }
+  }, [gpsPoints]);
 
   // Request location permission on mount
   useEffect(() => {
@@ -57,25 +102,18 @@ export default function RecordPage() {
     if (recordState === 'recording' && 'geolocation' in navigator) {
       const id = navigator.geolocation.watchPosition(
         (position) => {
-          const newPos: [number, number] = [position.coords.latitude, position.coords.longitude];
-          setCurrentPosition(newPos);
+          const point: GPSPoint = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            timestamp: Date.now(),
+            accuracy: position.coords.accuracy,
+          };
           
-          // Add to route
-          setRoute((prev) => {
-            const newRoute = [...prev, newPos];
-            
-            // Calculate distance from last point
-            if (prev.length > 0) {
-              const lastPos = prev[prev.length - 1];
-              const dist = calculateDistance(lastPos[0], lastPos[1], newPos[0], newPos[1]);
-              setDistance((prevDist) => prevDist + dist);
-            }
-            
-            return newRoute;
-          });
+          setGpsPoints((prev) => [...prev, point]);
+          console.log('GPS point recorded:', point);
         },
         (error) => {
-          console.error('Tracking error:', error);
+          console.error('GPS error:', error);
         },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
       );
@@ -127,24 +165,58 @@ export default function RecordPage() {
   };
 
   const handleStart = () => {
+    // Check if wallet connected
+    if (!address) {
+      console.warn('Wallet not connected');
+      return;
+    }
+
+    // Start tracking locally (no backend call)
     setRecordState('recording');
     setShowMap(true);
-    // Initialize route with current position
     setRoute([currentPosition]);
     setDistance(0);
     setTimer(0);
+    setGpsPoints([]);
+    setStartTime(Date.now());
+    setShowBackendStatus(false);
+    console.log('Started local GPS tracking');
   };
 
   const handlePause = () => {
     setRecordState('paused');
+    // Stop GPS tracking
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+    }
   };
 
   const handleResume = () => {
     setRecordState('recording');
+    // GPS tracking will restart via useEffect
   };
 
   const handleStop = () => {
-    router.push(`/record/validate?time=${timer}&distance=${distance.toFixed(2)}&pace=${pace}`);
+    // Check if tracking is active
+    if (recordState === 'idle') {
+      console.warn('No active tracking to stop');
+      return;
+    }
+
+    // Stop GPS tracking
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId);
+      setWatchId(null);
+    }
+
+    // Navigate to validate page with local stats and GPS data
+    const endTime = Date.now();
+    const gpsDataEncoded = encodeURIComponent(JSON.stringify(gpsPoints));
+    
+    router.push(
+      `/record/validate?time=${timer}&distance=${distance.toFixed(2)}&pace=${pace}&startTime=${startTime}&endTime=${endTime}&gpsData=${gpsDataEncoded}`
+    );
   };
 
   const formatTime = (seconds: number) => {
@@ -176,6 +248,13 @@ export default function RecordPage() {
                 <MapView center={currentPosition} route={route} isRecording={false} />
               )}
             </div>
+
+            {/* Backend Status - Above map, below stats */}
+            {showBackendStatus && (
+              <div className="absolute top-4 left-4 right-4 z-40">
+                <BackendStatus />
+              </div>
+            )}
 
             {/* Stats Overlay on Map - Above map layer */}
             <div className="absolute bottom-32 left-4 right-4 z-50">

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check Nonce - Runera Debug Tool</title>
+  <script src="https://cdn.jsdelivr.net/npm/viem@2.7.0/dist/viem.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f7fa;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2563eb;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 30px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 15px;
+      font-family: monospace;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .result {
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #2563eb;
+      margin-top: 20px;
+      display: none;
+    }
+    .result.show {
+      display: block;
+    }
+    .result.error {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+    .result.success {
+      border-left-color: #10b981;
+      background: #f0fdf4;
+    }
+    .label {
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 5px;
+    }
+    .value {
+      font-family: monospace;
+      font-size: 16px;
+      color: #1e293b;
+      margin-bottom: 15px;
+      word-break: break-all;
+    }
+    .info {
+      background: #eff6ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #3b82f6;
+    }
+    .info-title {
+      font-weight: 600;
+      color: #1e40af;
+      margin-bottom: 5px;
+    }
+    .info-text {
+      color: #1e40af;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Check Nonce</h1>
+    <p class="subtitle">Debug tool untuk cek nonce on-chain vs backend</p>
+
+    <div class="info">
+      <div class="info-title">ℹ️ Apa itu Nonce?</div>
+      <div class="info-text">
+        Nonce adalah counter yang digunakan untuk mencegah replay attack. Setiap kali updateStats dipanggil, nonce akan bertambah 1.
+        Backend harus menggunakan nonce yang sama dengan on-chain nonce saat generate signature.
+      </div>
+    </div>
+
+    <label class="label">Wallet Address:</label>
+    <input 
+      type="text" 
+      id="walletAddress" 
+      placeholder="0x..." 
+      value="0x2D8424E12f8CF0c057aC67b7371B3aAba4AFbF28"
+    />
+
+    <label class="label">Profile Contract Address:</label>
+    <input 
+      type="text" 
+      id="contractAddress" 
+      placeholder="0x..." 
+      value="0x725d729107C4bC61f3665CE1C813CbcEC7214343"
+    />
+
+    <button onclick="checkNonce()" id="checkBtn">Check Nonce</button>
+
+    <div id="result" class="result">
+      <div class="label">On-Chain Nonce:</div>
+      <div class="value" id="onChainNonce">-</div>
+
+      <div class="label">Has Profile:</div>
+      <div class="value" id="hasProfile">-</div>
+
+      <div class="label">Profile Data:</div>
+      <div class="value" id="profileData">-</div>
+    </div>
+  </div>
+
+  <script>
+    const RPC_URL = 'https://sepolia.base.org';
+    const CHAIN_ID = 84532;
+
+    const PROFILE_ABI = [
+      {
+        "type": "function",
+        "name": "getNonce",
+        "inputs": [{"name": "user", "type": "address"}],
+        "outputs": [{"name": "", "type": "uint256"}],
+        "stateMutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "hasProfile",
+        "inputs": [{"name": "user", "type": "address"}],
+        "outputs": [{"name": "", "type": "bool"}],
+        "stateMutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "getProfile",
+        "inputs": [{"name": "user", "type": "address"}],
+        "outputs": [{
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {"name": "xp", "type": "uint96"},
+            {"name": "level", "type": "uint16"},
+            {"name": "runCount", "type": "uint32"},
+            {"name": "achievementCount", "type": "uint32"},
+            {"name": "totalDistanceMeters", "type": "uint64"},
+            {"name": "longestStreakDays", "type": "uint32"},
+            {"name": "lastUpdated", "type": "uint64"},
+            {"name": "exists", "type": "bool"}
+          ]
+        }],
+        "stateMutability": "view"
+      }
+    ];
+
+    async function checkNonce() {
+      const walletAddress = document.getElementById('walletAddress').value.trim();
+      const contractAddress = document.getElementById('contractAddress').value.trim();
+      const resultDiv = document.getElementById('result');
+      const checkBtn = document.getElementById('checkBtn');
+
+      if (!walletAddress || !contractAddress) {
+        alert('Please enter both wallet and contract address');
+        return;
+      }
+
+      checkBtn.disabled = true;
+      checkBtn.textContent = 'Checking...';
+      resultDiv.className = 'result';
+
+      try {
+        // Create viem client
+        const { createPublicClient, http } = viem;
+        
+        const client = createPublicClient({
+          chain: {
+            id: CHAIN_ID,
+            name: 'Base Sepolia',
+            network: 'base-sepolia',
+            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+            rpcUrls: {
+              default: { http: [RPC_URL] },
+              public: { http: [RPC_URL] }
+            }
+          },
+          transport: http(RPC_URL)
+        });
+
+        // Check nonce
+        const nonce = await client.readContract({
+          address: contractAddress,
+          abi: PROFILE_ABI,
+          functionName: 'getNonce',
+          args: [walletAddress]
+        });
+
+        // Check if has profile
+        const hasProfile = await client.readContract({
+          address: contractAddress,
+          abi: PROFILE_ABI,
+          functionName: 'hasProfile',
+          args: [walletAddress]
+        });
+
+        // Get profile data
+        let profileData = 'N/A';
+        if (hasProfile) {
+          const profile = await client.readContract({
+            address: contractAddress,
+            abi: PROFILE_ABI,
+            functionName: 'getProfile',
+            args: [walletAddress]
+          });
+          
+          profileData = JSON.stringify({
+            xp: profile.xp.toString(),
+            level: profile.level,
+            runCount: profile.runCount,
+            achievementCount: profile.achievementCount,
+            totalDistanceMeters: profile.totalDistanceMeters.toString(),
+            longestStreakDays: profile.longestStreakDays,
+            lastUpdated: profile.lastUpdated.toString(),
+            exists: profile.exists
+          }, null, 2);
+        }
+
+        // Display results
+        document.getElementById('onChainNonce').textContent = nonce.toString();
+        document.getElementById('hasProfile').textContent = hasProfile ? '✅ Yes' : '❌ No';
+        document.getElementById('profileData').textContent = profileData;
+
+        resultDiv.className = 'result show success';
+
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('onChainNonce').textContent = 'Error: ' + error.message;
+        document.getElementById('hasProfile').textContent = '-';
+        document.getElementById('profileData').textContent = '-';
+        resultDiv.className = 'result show error';
+      } finally {
+        checkBtn.disabled = false;
+        checkBtn.textContent = 'Check Nonce';
+      }
+    }
+
+    // Auto-check on load
+    window.addEventListener('load', () => {
+      setTimeout(checkNonce, 500);
+    });
+  </script>
+</body>
+</html>
