@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Flame, TrendingUp, Target } from 'lucide-react';
 import { useDailyQuest } from '@/hooks/useDailyQuest';
+import { useModal } from '@/hooks/useModal';
+import Modal from './Modal';
 
 export default function QuestCard() {
   const {
@@ -11,6 +13,8 @@ export default function QuestCard() {
     weeklyProgress,
     overallProgress,
   } = useDailyQuest();
+
+  const modal = useModal();
 
   const DAILY_STEP_TARGET = 8500;
   const stepProgress = Math.min((dailySteps / DAILY_STEP_TARGET) * 100, 100);
@@ -137,7 +141,10 @@ export default function QuestCard() {
   // Claim distance quest
   const claimDistanceQuest = () => {
     if (todayDistance < 5) {
-      alert(`Not enough distance! You need 5km, but only ran ${todayDistance.toFixed(2)}km today. 🏃‍♂️`);
+      modal.warning(
+        'Not Enough Distance',
+        `You need 5km to claim this quest.\n\nCurrent: ${todayDistance.toFixed(2)}km\nNeeded: 5.00km\n\nKeep running! 🏃‍♂️`
+      );
       return;
     }
     
@@ -145,13 +152,19 @@ export default function QuestCard() {
     localStorage.setItem('runera_distance_quest_claim_time', String(Date.now()));
     setShowDistanceQuest(false);
     
-    alert(`🎉 Claimed Distance Quest!\n\n+50 XP for running ${todayDistance.toFixed(2)}km!\n\nQuest will reappear in 5 minutes.`);
+    modal.success(
+      'Quest Completed! 🎉',
+      `+50 XP for running ${todayDistance.toFixed(2)}km!\n\nQuest will reappear in 5 minutes.`
+    );
   };
 
   // Claim activities quest
   const claimActivitiesQuest = () => {
     if (todayActivityCount < 3) {
-      alert(`Not enough activities! You need 3 activities, but only completed ${todayActivityCount} today. 🏃‍♂️`);
+      modal.warning(
+        'Not Enough Activities',
+        `You need 3 activities to claim this quest.\n\nCompleted: ${todayActivityCount}/3\n\nKeep going! 💪`
+      );
       return;
     }
     
@@ -159,13 +172,19 @@ export default function QuestCard() {
     localStorage.setItem('runera_activities_quest_claim_time', String(Date.now()));
     setShowActivitiesQuest(false);
     
-    alert(`🎉 Claimed Activities Quest!\n\n+30 XP for completing ${todayActivityCount} activities!\n\nQuest will reappear in 5 minutes.`);
+    modal.success(
+      'Quest Completed! 🎉',
+      `+30 XP for completing ${todayActivityCount} activities!\n\nQuest will reappear in 5 minutes.`
+    );
   };
 
   // Claim XP quest
   const claimXpQuest = () => {
     if (todayXP < 100) {
-      alert(`Not enough XP! You need 100 XP, but only earned ${todayXP} XP today. 🏃‍♂️`);
+      modal.warning(
+        'Not Enough XP',
+        `You need 100 XP to claim this quest.\n\nEarned: ${todayXP}/100 XP\n\nKeep running to earn more XP! 🏃‍♂️`
+      );
       return;
     }
     
@@ -173,7 +192,10 @@ export default function QuestCard() {
     localStorage.setItem('runera_xp_quest_claim_time', String(Date.now()));
     setShowXpQuest(false);
     
-    alert(`🎉 Claimed XP Quest!\n\n+${todayXP} XP bonus!\n\nQuest will reappear in 5 minutes.`);
+    modal.success(
+      'Quest Completed! 🎉',
+      `+${todayXP} XP bonus!\n\nQuest will reappear in 5 minutes.`
+    );
   };
 
   // Get current week days with completion status
@@ -425,6 +447,19 @@ export default function QuestCard() {
           )}
         </div>
       </div>
+      
+      {/* Modal */}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={modal.closeModal}
+        title={modal.config.title}
+        message={modal.config.message}
+        type={modal.config.type}
+        confirmText={modal.config.confirmText}
+        cancelText={modal.config.cancelText}
+        onConfirm={modal.config.onConfirm}
+        showCancel={modal.config.showCancel}
+      />
     </div>
   );
 }

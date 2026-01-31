@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { createConfig } from 'wagmi';
+import { ToastProvider } from '@/components/ToastProvider';
 
 // Wagmi config for Base Sepolia Testnet
 const config = createConfig({
@@ -55,7 +56,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={config}>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
