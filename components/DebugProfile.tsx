@@ -4,10 +4,12 @@ import { useAccount } from 'wagmi';
 import { useProfile } from '@/hooks/useProfile';
 import { useState } from 'react';
 import { CONTRACTS } from '@/lib/contracts';
+import { useToast } from './ToastProvider';
 
 export function DebugProfile() {
   const { address } = useAccount();
   const { hasProfile, profile, isLoading, tokenBalance, hasProfileFallback } = useProfile(address);
+  const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
 
   if (!address) return null;
@@ -187,7 +189,7 @@ export function DebugProfile() {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(address);
-                    alert('Address copied!');
+                    toast.success('Address copied!', 2000);
                   }}
                   className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 font-semibold"
                 >

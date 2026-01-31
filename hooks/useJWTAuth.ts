@@ -148,37 +148,34 @@ export function useJWTAuth() {
         setIsAuthenticated(true);
         setError(null);
       } catch (err: any) {
-        console.error('❌ Backend authentication failed:', err);
+        // Silent error handling - don't spam console
+        const errorMessage = err.message || 'Authentication failed';
         
-        // Parse error message
-        let errorMessage = 'Authentication failed';
-        if (err.message) {
-          errorMessage = err.message;
-        }
-        if (err.details?.error?.message) {
-          errorMessage = err.details.error.message;
+        // Only log critical errors, not network errors
+        if (!errorMessage.includes('fetch') && !errorMessage.includes('NetworkError')) {
+          console.error('❌ Backend authentication failed:', err);
         }
         
-        // Check for specific errors
-        if (errorMessage.includes('Failed to create nonce')) {
-          errorMessage = 'Backend database error. Please try again later.';
-          console.error('💾 Database error - Railway service might be down');
+        // Parse error message for user
+        let userMessage = 'Authentication failed';
+        if (errorMessage.includes('Failed to create nonce') || errorMessage.includes('database')) {
+          userMessage = 'Backend database error';
         } else if (errorMessage.includes('fetch') || errorMessage.includes('NetworkError')) {
-          errorMessage = 'Cannot connect to backend. Please check your internet connection.';
-          console.error('🌐 Network error - Backend might be unreachable');
+          userMessage = 'Backend offline';
+          // Don't set error state for network errors - backend might be down temporarily
+          setError(null);
+          setIsAuthenticated(false);
+          setIsAuthenticating(false);
+          return;
         } else if (errorMessage.includes('Signature') || errorMessage.includes('signature')) {
-          errorMessage = 'Signature verification failed. Please try again.';
-          console.error('✍️ Signature error - Message signing or verification failed');
+          userMessage = 'Signature verification failed';
         } else if (errorMessage.includes('Nonce')) {
-          errorMessage = 'Authentication session expired. Please try again.';
-          console.error('⏰ Nonce error - Session expired or invalid');
+          userMessage = 'Authentication session expired';
         } else if (errorMessage.includes('Wallet')) {
-          errorMessage = 'Wallet error. Please ensure your wallet is connected.';
-          console.error('👛 Wallet error - Wallet not found or not connected');
+          userMessage = 'Wallet error';
         }
         
-        console.log('📝 User-friendly error:', errorMessage);
-        setError(errorMessage);
+        setError(userMessage);
         setIsAuthenticated(false);
         // Don't throw - allow user to continue with limited functionality
       } finally {

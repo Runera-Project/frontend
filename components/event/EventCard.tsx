@@ -4,6 +4,7 @@ import { Calendar, MapPin, Users, Award, Clock } from 'lucide-react';
 import { EventData } from '@/hooks/useEvents';
 import { useJoinEvent } from '@/hooks/useJoinEvent';
 import { useState } from 'react';
+import { useToast } from '@/components/ToastProvider';
 
 interface EventCardProps {
   event: EventData;
@@ -12,6 +13,7 @@ interface EventCardProps {
 export default function EventCard({ event }: EventCardProps) {
   const { join, isLoading } = useJoinEvent();
   const [joined, setJoined] = useState(false);
+  const toast = useToast();
   
   const formatDate = (timestamp: bigint) => {
     const date = new Date(Number(timestamp) * 1000);
@@ -34,9 +36,9 @@ export default function EventCard({ event }: EventCardProps) {
     try {
       await join(event.eventId);
       setJoined(true);
-      alert('Successfully joined event! 🎉');
+      toast.success('Successfully joined event! 🎉', 3000);
     } catch (error: any) {
-      alert(`Failed to join event: ${error.message}`);
+      toast.error(`Failed to join event: ${error.message}`, 3000);
     }
   };
 
@@ -65,7 +67,7 @@ export default function EventCard({ event }: EventCardProps) {
             </div>
           </div>
         </div>
-        
+
         {/* Participants Badge - Top Right */}
         <div className="absolute right-3 top-3">
           <div className="flex items-center gap-1.5 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-bold text-gray-800 shadow-md backdrop-blur-sm">

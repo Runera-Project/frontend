@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { Copy, Check, Wallet, Plus } from 'lucide-react';
+import { useToast } from './ToastProvider';
 
 export default function WalletAddressDisplay() {
   const { user, createWallet } = usePrivy();
   const [copied, setCopied] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const toast = useToast();
 
   // Handler functions
   const handleCopy = async (address: string) => {
@@ -26,11 +28,12 @@ export default function WalletAddressDisplay() {
       console.log('🔨 Creating embedded wallet...');
       await createWallet();
       console.log('✅ Embedded wallet created!');
+      toast.success('Wallet created successfully!', 2000);
       // Refresh page to show new wallet
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error('❌ Failed to create wallet:', error);
-      alert('Failed to create wallet. Please try again.');
+      toast.error('Failed to create wallet. Please try again.', 3000);
     } finally {
       setIsCreating(false);
     }

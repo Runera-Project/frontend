@@ -8,6 +8,9 @@ import { useAccount, useWriteContract, useSwitchChain } from 'wagmi';
 import { submitRun } from '@/lib/api';
 import { CONTRACTS, ABIS } from '@/lib/contracts';
 import { baseSepolia } from 'viem/chains';
+import { useModal } from '@/hooks/useModal';
+import { useToast } from '@/components/ToastProvider';
+import Modal from '@/components/Modal';
 
 function ValidateContent() {
   const searchParams = useSearchParams();
@@ -18,6 +21,8 @@ function ValidateContent() {
   const [isPosting, setIsPosting] = useState(false);
   const [useDummyData, setUseDummyData] = useState(false);
   const { writeContractAsync } = useWriteContract();
+  const modal = useModal();
+  const toast = useToast();
   
   const time = searchParams.get('time') || '0';
   const distance = searchParams.get('distance') || '0.00';
@@ -47,7 +52,7 @@ function ValidateContent() {
 
   const handlePost = async () => {
     if (!address) {
-      alert('Please connect your wallet first');
+      modal.warning('Wallet Not Connected', 'Please connect your wallet first to post your activity.');
       return;
     }
 
@@ -57,8 +62,11 @@ function ValidateContent() {
     
     if (!token) {
       console.warn('⚠️ No JWT token found!');
-      alert('Authentication required!\n\nPlease sign the message in your wallet to authenticate with backend.\n\nRedirecting to login...');
-      router.push('/login');
+      modal.warning(
+        'Authentication Required',
+        'Please sign the message in your wallet to authenticate.\n\nRedirecting to login...',
+        () => router.push('/login')
+      );
       return;
     }
 
@@ -162,8 +170,11 @@ function ValidateContent() {
         console.warn('⚠️ Run was not verified!');
         console.warn('Status:', result.status);
         console.warn('Reason:', result.reasonCode);
-        alert(`Run submitted but not verified!\n\nStatus: ${result.status}\nReason: ${result.reasonCode || 'Unknown'}\n\nPlease check console for details.`);
-        router.push('/');
+        modal.warning(
+          'Run Not Verified',
+          `Status: ${result.status}\nReason: ${result.reasonCode || 'Unknown'}\n\nPlease check console for details.`,
+          () => router.push('/')
+        );
         return;
       }
 
@@ -288,7 +299,7 @@ function ValidateContent() {
           console.log('Transaction hash:', tx);
           console.log('View on BaseScan:', `https://sepolia.basescan.org/tx/${tx}`);
           
-          alert(`✅ On-chain update successful!\n\nXP: ${stats.xp}\nLevel: ${stats.level}\n\nTx: ${tx.slice(0, 10)}...`);
+          toast.success(`On-chain update successful! XP: ${stats.xp}, Level: ${stats.level}`, 3000);
         } catch (error: any) {
           console.error('❌ Smart contract update failed:', error);
           
@@ -308,7 +319,7 @@ function ValidateContent() {
             userFriendlyMsg = `⚠️ Backend updated but on-chain sync failed!\n\nYour XP is saved in backend, but not yet on blockchain.\n\nError: ${errorMsg.substring(0, 100)}`;
           }
           
-          alert(userFriendlyMsg);
+          modal.error('Transaction Failed', userFriendlyMsg);
         }
       } else {
         console.warn('⚠️ No signature from backend, skipping on-chain update');
@@ -376,13 +387,18 @@ function ValidateContent() {
 
       // Show success message
       if (xpEarned > 0) {
-        alert(`Activity posted! +${xpEarned} XP earned! 🎉\n\nRun ID: ${runId}\nStatus: ${result.status}\nDistance: ${savedDistance}km`);
+        modal.success(
+          'Activity Posted! 🎉',
+          `+${xpEarned} XP earned!\n\nRun ID: ${runId}\nDistance: ${savedDistance}km`,
+          () => router.push('/')
+        );
       } else {
-        alert(`Activity posted successfully! 🎉\n\nRun ID: ${runId}\nStatus: ${result.status}\nDistance: ${savedDistance}km`);
+        modal.success(
+          'Activity Posted! 🎉',
+          `Run ID: ${runId}\nDistance: ${savedDistance}km`,
+          () => router.push('/')
+        );
       }
-
-      // Redirect to home
-      router.push('/');
     } catch (error: any) {
       console.error('Post error:', error);
       
@@ -440,9 +456,11 @@ function ValidateContent() {
         }
       }
       
-      alert(`Activity saved locally! +${estimatedXP} XP earned!\n\nNote: Backend unavailable (${errorMsg})`);
-      
-      router.push('/');
+      modal.success(
+        'Activity Saved Locally',
+        `+${estimatedXP} XP earned!\n\nNote: Backend unavailable, data saved locally.`,
+        () => router.push('/')
+      );
     } finally {
       setIsPosting(false);
     }
@@ -631,6 +649,19 @@ function ValidateContent() {
         </div>
       </div>
       <BottomNavigation activeTab="Record" />
+      
+      {/* Modal */}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={modal.closeModal}
+        title={modal.config.title}
+        message={modal.config.message}
+        type={modal.config.type}
+        confirmText={modal.config.confirmText}
+        cancelText={modal.config.cancelText}
+        onConfirm={modal.config.onConfirm}
+        showCancel={modal.config.showCancel}
+      />
     </div>
   );
 }

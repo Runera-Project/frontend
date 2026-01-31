@@ -1,15 +1,21 @@
 'use client';
 
 import EventCard from './EventCard';
-import { Trophy } from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { useProfile } from '@/hooks/useProfile';
+import { useAccount } from 'wagmi';
+import { Trophy } from 'lucide-react';
+import { TIER_COLORS } from '@/lib/contracts';
 
 export default function EventList() {
   const { events, isLoading } = useEvents();
-  const { profile } = useProfile();
+  const { address } = useAccount();
+  const { profile } = useProfile(address);
 
-  const userRank = profile?.tier || 'Bronze';
+  // Get user's tier
+  const tierName = profile?.tierName || 'Bronze';
+  const tier = profile?.tier || 1;
+  const tierGradient = TIER_COLORS[tier as keyof typeof TIER_COLORS] || TIER_COLORS[1];
 
   if (isLoading) {
     return (
@@ -29,15 +35,15 @@ export default function EventList() {
 
   return (
     <div className="px-5">
-      {/* User Rank Badge */}
-      <div className="mb-5 flex items-center justify-between rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 p-4 shadow-sm">
+      {/* User Rank Card */}
+      <div className={`mb-5 flex items-center justify-between rounded-xl bg-gradient-to-r ${tierGradient} p-4 shadow-sm`}>
         <div className="flex items-center gap-2.5">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm">
             <Trophy className="h-5 w-5 text-white" />
           </div>
           <div>
             <p className="text-[10px] font-medium text-white/80">Your Rank</p>
-            <p className="text-base font-bold text-white">{userRank}</p>
+            <p className="text-base font-bold text-white">{tierName}</p>
           </div>
         </div>
         <button className="rounded-lg bg-white/20 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-sm transition-all hover:bg-white/30">

@@ -4,6 +4,8 @@ import { Lock, Trophy, Zap } from 'lucide-react';
 import type { Achievement } from '@/hooks/useAchievements';
 import { useClaimAchievement } from '@/hooks/useClaimAchievement';
 import { useState } from 'react';
+import { useModal } from '@/hooks/useModal';
+import Modal from './Modal';
 
 interface AchievementCardProps {
   achievement: Achievement;
@@ -29,6 +31,7 @@ const TIER_NAMES = {
 export default function AchievementCard({ achievement, size = 'medium' }: AchievementCardProps) {
   const progress = Math.min((achievement.progress / achievement.total) * 100, 100);
   const tierGradient = TIER_COLORS[achievement.tier];
+  const modal = useModal();
   const tierName = TIER_NAMES[achievement.tier];
   const { claimAchievement, isLoading: isClaiming } = useClaimAchievement();
   const [claimed, setClaimed] = useState(false);
@@ -43,17 +46,13 @@ export default function AchievementCard({ achievement, size = 'medium' }: Achiev
       
       setClaimed(true);
       
-      alert(
-        `✅ Achievement claimed! NFT minted! 🎉\n\n` +
-        `Achievement: ${achievement.name}\n` +
-        `Tier: ${TIER_NAMES[achievement.tier]}\n` +
-        `Reward: +${achievement.reward.xp} XP\n\n` +
-        `Transaction: ${result.hash.slice(0, 10)}...${result.hash.slice(-8)}\n` +
-        `View on BaseScan: https://sepolia.basescan.org/tx/${result.hash}`
+      modal.success(
+        'Achievement Claimed! 🎉',
+        `NFT minted successfully!\n\nAchievement: ${achievement.name}\nTier: ${TIER_NAMES[achievement.tier]}\nReward: +${achievement.reward.xp} XP\n\nTx: ${result.hash.slice(0, 10)}...`
       );
     } catch (error: any) {
       console.error('❌ Claim failed:', error);
-      alert(`Failed to claim achievement!\n\nError: ${error.message}`);
+      modal.error('Claim Failed', `Failed to claim achievement!\n\nError: ${error.message}`);
     }
   };
 
@@ -262,6 +261,19 @@ export default function AchievementCard({ achievement, size = 'medium' }: Achiev
           {tierName}
         </span>
       </div>
+      
+      {/* Modal */}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={modal.closeModal}
+        title={modal.config.title}
+        message={modal.config.message}
+        type={modal.config.type}
+        confirmText={modal.config.confirmText}
+        cancelText={modal.config.cancelText}
+        onConfirm={modal.config.onConfirm}
+        showCancel={modal.config.showCancel}
+      />
     </div>
   );
 }

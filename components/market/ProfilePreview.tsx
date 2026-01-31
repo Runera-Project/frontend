@@ -75,29 +75,15 @@ export default function ProfilePreview({ selectedSkin }: ProfilePreviewProps) {
         {/* User Info */}
         <div className="text-center">
           <h3 className="mb-1 text-xl font-bold text-gray-900">{displayName}</h3>
-          <p className="mb-3 text-sm text-gray-500">{walletAddress}</p>
-
-          {/* Stats */}
-          <div className="mb-4 flex items-center justify-center gap-4 text-sm">
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4 text-gray-400" />
-              <span className="font-semibold text-gray-900">11</span>
-              <span className="text-gray-500">followers</span>
-            </div>
-            <div className="h-4 w-px bg-gray-200" />
-            <div className="flex items-center gap-1">
-              <span className="font-semibold text-gray-900">2</span>
-              <span className="text-gray-500">following</span>
-            </div>
-          </div>
+          <p className="mb-4 text-sm text-gray-500">{walletAddress}</p>
 
           {/* Badges */}
           <div className="flex items-center justify-center gap-2">
-            <div className={`rounded-full bg-gradient-to-r ${tierGradient} px-4 py-1.5 text-xs font-bold text-white shadow-sm`}>
+            <div className={`inline-flex rounded-full bg-gradient-to-r ${tierGradient} px-6 py-2 text-sm font-bold text-white shadow-md`}>
               {profile?.tierName || 'Bronze'} Runner
             </div>
             {selectedSkin && (
-              <div className="rounded-full bg-gradient-to-r from-purple-400 to-pink-400 px-4 py-1.5 text-xs font-bold text-white shadow-sm">
+              <div className="inline-flex rounded-full bg-gradient-to-r from-purple-400 to-pink-400 px-6 py-2 text-sm font-bold text-white shadow-md">
                 {selectedSkin.name}
               </div>
             )}
